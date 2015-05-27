@@ -1,5 +1,5 @@
 var AREA_LENGTH = 8;
-
+var board;
 
 // 手番オブジェクト
 var turn = function() {
@@ -26,8 +26,8 @@ var turn = function() {
 
 // 盤面オブジェクト
 var initBoard = function(areaLength){
+	// 全部で何個置けるか
 	var squareNum = areaLength * areaLength - 4;
-	var possibleSquare = [];
 	// マスオブジェクトの配列
 	var square = [];
 	// 初期化
@@ -47,181 +47,108 @@ var initBoard = function(areaLength){
 	square[x -1][y].color = "black";
 	square[x][y].color = "white";
 
-	var willChangeTbl = [];
-
 	var change = function(pos, color){
-		square[pos.x][pos.y].color = color;
 	};
 
-	var checkTop = function(pos, color){
-		var temp = [];
-		if(pos.x === 0){ return; }
-		for(var i =(pos.x - 1); i >= 0; --i){
-			var sqCol = square[i][pos.y].color;
-			if(sqCol === "none"){ return; }
-			if( (i === (pos.x-1)) && (sqCol === color) ){ return; }
-			if(sqCol === color){
-				willChangeTbl = willChangeTbl.concat(temp);
-				return;
+	// posに石を打てるかチェックして打てる場合はひっくり返る座標を返す
+	var check = function(pos, color, dest, direction){
+		var changes = [];
+		var lengthX = null, lengthY = null;
+		var length = null;
+
+		// directionが0の場合はその方向をチェックしない
+		if(direction.x !== 0){
+			lengthX = Math.abs(pos.x - dest.x);
+		}
+		if(direction.y !== 0){
+			lengthY = Math.abs(pos.y - dest.y);
+		}
+
+		// x,y 両方チェックする場合は短い方をlengthにセット
+		// そうでない場合はnullじゃない方をセット
+		if(lengthX !== null && lengthY !== null){
+			length = lengthX <= lengthY ? lengthX : lengthY;
+		}else{
+			if(lengthX !== null){ length = lengthX; }
+			if(lengthY !== null){ length = lengthY; }
+		}
+
+		if(length !== null){
+			for(var i = 1; i <= length; i++){
+				// 座標計算
+				var x = pos.x + i * direction.x;
+				var y = pos.y + i * direction.y;
+
+				var sqCol = square[x][y].color;
+				// none は即リターン
+				if(sqCol === "none") { return null; }
+
+				// 一個目で同じ色の場合も置けない
+				if(i === 1 && sqCol === color) { return null; }
+
+				// 同色までの座標を返す
+				if(sqCol === color){
+					return changes;
+				}
+
+				// 間にある座標を保存しておく
+				changes.push( { x: x, y: y });
 			}
-			temp.push( { x: i, y: pos.y } );
 		}
 	};
 
-	var checkBottom = function(pos, color){
-		var temp = [];
-		var initial = pos.x + 1;
-		for(var i = initial; i < areaLength; ++i){
-			var sqCol = square[i][pos.y].color;
-			if(sqCol === "none"){ return; }
-			if(i === initial && sqCol === color){ return; }
-			if(sqCol === color){
-				willChangeTbl = willChangeTbl.concat(temp);
-			}
-			temp.push( { x: i, y: pos.y } );
-		}
-	};
-
-	var checkLeft = function(pos, color){
-		if(pos.y === 0){ return; }
-		var temp = [];
-		for(var i = pos.y - 1; i >= 0; --i){
-			var sqCol = square[pos.x][i].color;
-			if(sqCol === "none") { return; }
-			if(i === pos.y - 1 && sqCol === color){ return; }
-			if(sqCol === color){
-				willChangeTbl = willChangeTbl.concat(temp);
-				return;
-			}
-			temp.push( { x: pos.x, y: i } );
-		}
-	};
-
-	var checkRight = function(pos, color){
-		var temp = [];
-		var initial = pos.y + 1;
-		for(var i = initial; i < areaLength; ++i){
-			var sqCol = square[pos.x][i].color; 
-			if(sqCol === "none" ) { return; }
-			if(i === initial && sqCol === color) { return; }
-			if(sqCol === color){
-				willChangeTbl = willChangeTbl.concat(temp);
-				return;
-			}
-			temp.push( { x: pos.x, y: i } );
-		}
-	};
-
-	var checkLeftTop = function(pos, color){
-		var possibleSquare = [];
-		if(pos.x === 0 || pos.y === 0) { return; }
-		var temp = [];
-		var initialX = pos.x - 1;
-		var initialY = pos.y - 1;
-		for(var i = initialX, j = initialY; i >= 0 && j >= 0; --i, --j){
-			var sqCol = square[i][j].color;
-			if(sqCol === "none"){ return; }
-			if(i === initialX && j === initialY && sqCol === color) { return; }
-			if(sqCol === color){
-				willChangeTbl = willChangeTbl.concat(temp);
-				return;
-			}
-			temp.push( { x: i, y: j } );
-		}
-	};
-
-	var checkLeftBottom = function(pos, color){
-		if(pos.y === 0) { return; }
-		var temp = [];
-		var initialX = pos.x + 1
-		var initialY = pos.y - 1;
-		for(var i = initialX, j = initialY; i < areaLength && j >= 0; ++i, --j){
-			var sqCol = square[i][j].color;
-			if(sqCol === "none") { return; }
-			if(i === initialX && j === initialY && sqCol === color){ return; }
-			if(sqCol === color){
-				willChangeTbl = willChangeTbl.concat(temp);
-				return;
-			}
-			temp.push( { x: i, y: j });
-		}
-	};
-
-	var checkRighTop = function(pos, color){
-		if(pos.x === 0) { return; }
-		var temp = [];
-		var initialX = pos.x - 1;
-		var initialY = pos.y + 1;
-		for(var i = initialX, j = initialY; i >= 0 && j < areaLength; --i, ++j){
-			var sqCol = square[i][j].color;
-			if(sqCol === "none") { return; }
-			if(i === initialX && j === initialY && sqCol === color){ return; }
-			if(sqCol === color){
-				willChangeTbl = willChangeTbl.concat(temp);
-				return;
-			}
-			temp.push( { x: i, y: j } );
-		}
-	};
-
-	var checkRightBottom = function(pos, color){
-		var temp = [];
-		var initialX = pos.x + 1;
-		var initialY = pos.y + 1;
-		for(var i = initialX, j = initialY; i < areaLength && j < areaLength; ++i, ++j){
-			var sqCol = square[i][j].color;
-			if(sqCol === "none") { return; }
-			if( i === initialX & j === initialY && sqCol === color) { return; }
-			if(sqCol === color){
-				willChangeTbl = willChangeTbl.concat(temp);
-				return;
-			}
-			temp.push( { x: i, y: j });
-		}
-	};
-	var check = function(pos, color){
+	// ひっくり返る座標の配列を取得
+	var getChanges = function(pos, color){
 		if(square[pos.x][pos.y].color !== "none") {
-			return false;
+			return [];
 		}
-		checkLeft(pos, color);
-		checkRight(pos, color);
-		checkTop(pos, color);
-		checkBottom(pos, color);
-		checkLeftTop(pos, color);
-		checkRighTop(pos, color);
-		checkLeftBottom(pos, color);
-		checkRightBottom(pos, color);
-		if(willChangeTbl.length === 0) {
-			return false;
+		// 8方向
+		var left =        { dest: { x: pos.x, y: 0                           }, direction: {x: 0, y: -1 } };
+		var right =       { dest: { x: pos.x, y: areaLength - 1              }, direction: {x: 0, y: 1 } };
+		var top =         { dest: { x: 0, y: pos.y                           }, direction: {x: -1, y: 0 } };
+		var bottom =      { dest: { x: (areaLength - 1), y: pos.y            }, direction: {x: 1, y: 0 } };
+		var leftTop =     { dest: { x: 0, y: 0                               }, direction: {x: -1, y: -1 } };
+		var rightTop =    { dest: { x: 0, y: (areaLength - 1)                }, direction: {x: -1, y: 1 } };
+		var leftBottom =  { dest: { x: (areaLength - 1), y: 0                }, direction: {x: 1, y: -1 } };
+		var rightBottom = { dest: { x: (areaLength - 1), y: (areaLength - 1) }, direction: {x: 1, y: 1 } };
+		var params = [ left, right, top, bottom, leftTop, rightTop, leftBottom, rightBottom ];
+
+		var changes = [];
+		for(var i = 0; i < 8; i++){
+			var param = params[i];
+			var c = check(pos, color, param.dest, param.direction);
+			if(c){
+				changes = changes.concat(c);
+			}
 		}
-		return true;
+		return changes;
+	};
+
+	var update = function(color, changes){
+		for(var i = 0; i < changes.length; ++i){
+			var pos = changes[i];
+			square[pos.x][pos.y].color = color;
+		}
 	};
 
 	return {
-		// 打つことが出来るマスを配列にセットする
-		setPossibleSquare: function(color){
-			possibleSquare = [];
-			willChangeTbl = [];
+		// 打つことが出来るマスを取得する
+		getPossibles: function(color){
+			var possibles = [];
 			for(var i = 0; i < areaLength; ++i){
 				for(var j = 0; j < areaLength; ++j){
-					if(check({x: i, y: j } , color)){
-						possibleSquare.push({ x: i, y: j });
-						willChangeTbl = [];
+					var changes = getChanges({ x: i, y: j }, color);
+					if(changes.length !== 0){
+						possibles.push({ x: i, y: j });
 					}
 				}
 			}
-		},
-		// 打つことが出来るマスがあるか
-		existPossibleSquare: function(){
-			if(possibleSquare.length !== 0){
-				return true;
-			}
-			return false;
+			return possibles;
 		},
 
 		// 打つ座標が正しいか
-		validate: function(pos){
-			var sq = possibleSquare.filter(function(item){
+		validate: function(pos, possibles){
+			var sq = possibles.filter(function(item){
 				if(item.x === pos.x && item.y === pos.y){
 					return true;
 				}
@@ -235,17 +162,14 @@ var initBoard = function(areaLength){
 
 		// 石を置く
 		put: function(pos, color){
-			check(pos, color);
+			// ひっくり返る座標を取得して更新
+			var changes = getChanges(pos, color);
+			update(color, changes);
 			square[pos.x][pos.y].color = color;
 			squareNum -= 1;
 		},
 
-		update: function(color){
-			for(var i = 0; i < willChangeTbl.length; ++i){
-				change(willChangeTbl[i], color);
-			}
-		},
-
+		// 描画
 		render: function(){
 			for(var i = 0; i < areaLength; ++i){
 				for(var j = 0; j < areaLength; ++j){
@@ -256,12 +180,14 @@ var initBoard = function(areaLength){
 			}
 		},
 
+		// 終了か
 		isFinish: function(){
 			if(squareNum <= 0){
 				return true;
 			}
 			return false;
 		},
+		// 結果計算
 		calcResult: function(){
 			var w = 0;
 			var b = 0;
@@ -307,15 +233,13 @@ var parseId = function(id){
 	};
 }
 
-var board;
 var onClick = function(e){
 	if(e.target.tagName === "CANVAS"){
 		var pos = parseId(e.target.id);
 		var color = turn.getNowPlayer();
-		board.setPossibleSquare(color);
-		if(board.validate(pos)){
+		var possibles = board.getPossibles(color);
+		if(board.validate(pos, possibles)){
 			board.put(pos, color);
-			board.update(color);
 			board.render();
 			if(board.isFinish()){
 				dispResult();
@@ -327,8 +251,8 @@ var onClick = function(e){
 			// 両方共置く場所がない場合は結果を表示して終了
 			turn.changeTurn();
 			color = turn.getNowPlayer();
-			board.setPossibleSquare(color);
-			if(board.existPossibleSquare()){
+			possibles = board.getPossibles(color);
+			if(possibles.length){
 				turn.render();
 				return;
 			}
@@ -336,8 +260,8 @@ var onClick = function(e){
 
 			turn.changeTurn();
 			color = turn.getNowPlayer();
-			board.setPossibleSquare(color);
-			if(board.existPossibleSquare()){
+			possibles = board.getPossibles(color);
+			if(possibles.length){
 				turn.render();
 				return;
 			}
