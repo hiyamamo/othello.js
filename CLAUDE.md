@@ -1,118 +1,112 @@
-# CLAUDE.md - AI Assistant Guide for othello.js
+# CLAUDE.md - AIアシスタント向けガイド
 
-## Project Overview
+## プロジェクト概要
 
-This is a browser-based **Othello (Reversi)** game implemented in vanilla JavaScript with HTML5 Canvas rendering. The game runs entirely client-side with no backend dependencies.
+ブラウザベースの**オセロ（リバーシ）**ゲームです。HTML5 CanvasとバニラJavaScriptで実装されており、バックエンド不要でクライアントサイドのみで動作します。
 
-## Directory Structure
+## ディレクトリ構成
 
 ```
 othello.js/
-├── index.html              # Main HTML entry point
+├── index.html              # メインHTMLエントリーポイント
 ├── public/
 │   ├── css/
-│   │   └── main.css        # Stylesheet (currently empty - styles are inline)
+│   │   └── main.css        # スタイルシート（現在空 - スタイルはJS内でインライン定義）
 │   └── js/
-│       └── main.js         # Complete game logic and rendering
-└── CLAUDE.md               # This file
+│       └── main.js         # ゲームロジックと描画処理
+└── CLAUDE.md               # このファイル
 ```
 
-## Architecture
+## アーキテクチャ
 
-### Core Components (public/js/main.js)
+### コアコンポーネント (public/js/main.js)
 
-The game uses a module pattern with the following key objects:
+モジュールパターンを使用した以下の主要オブジェクトで構成されています：
 
-1. **`turn`** (lines 5-25) - Singleton object managing player turns
-   - `init()` - Reset to black's turn
-   - `changeTurn()` - Switch between black and white
-   - `getNowPlayer()` - Returns current player color
-   - `render()` - Updates DOM to show current player
+1. **`turn`** (5-25行目) - 手番管理シングルトンオブジェクト
+   - `init()` - 黒の手番にリセット
+   - `changeTurn()` - 黒と白を切り替え
+   - `getNowPlayer()` - 現在のプレイヤー色を返す
+   - `render()` - DOMを更新して現在のプレイヤーを表示
 
-2. **`initBoard(areaLength)`** (lines 28-214) - Factory function creating the board state
-   - `getPossibles(color)` - Returns array of valid move positions
-   - `validate(pos, possibles)` - Checks if a position is valid
-   - `put(pos, color)` - Places a piece and flips captured pieces
-   - `render()` - Draws all pieces using Canvas API
-   - `isFinish()` - Checks if game is over
-   - `calcResult()` - Calculates winner
+2. **`initBoard(areaLength)`** (28-214行目) - 盤面状態を生成するファクトリ関数
+   - `getPossibles(color)` - 有効な着手位置の配列を返す
+   - `validate(pos, possibles)` - 位置が有効かチェック
+   - `put(pos, color)` - 石を置いて挟んだ石をひっくり返す
+   - `render()` - Canvas APIで全ての石を描画
+   - `isFinish()` - ゲーム終了かチェック
+   - `calcResult()` - 勝敗を計算
 
-3. **Helper Functions**
-   - `drawCircle(color, target)` (lines 216-226) - Renders a single piece on canvas
-   - `parseId(id)` (lines 228-234) - Converts canvas ID to board coordinates
-   - `onClick(e)` (lines 236-273) - Main click event handler with game flow logic
-   - `initTable(length)` (lines 303-317) - Creates HTML table with canvas elements
+3. **ヘルパー関数**
+   - `drawCircle(color, target)` (216-226行目) - 1つの石をcanvasに描画
+   - `parseId(id)` (228-234行目) - canvasのIDを盤面座標に変換
+   - `onClick(e)` (236-273行目) - メインのクリックイベントハンドラ
+   - `initTable(length)` (303-317行目) - canvas要素を含むHTMLテーブルを生成
 
-### Game Flow
+### ゲームフロー
 
-1. Page loads → `load()` is called via DOMContentLoaded
-2. Board is initialized as 8x8 grid with 4 starting pieces
-3. Black plays first
-4. On click: validate move → place piece → flip captured → change turn
-5. If no valid moves, turn passes automatically
-6. Game ends when board is full or neither player can move
+1. ページ読み込み → DOMContentLoadedで`load()`が呼ばれる
+2. 8x8の盤面が初期化され、中央に4つの石が配置される
+3. 黒が先手
+4. クリック時: 着手検証 → 石を置く → 挟んだ石をひっくり返す → 手番交代
+5. 有効な手がない場合、自動的にパス
+6. 盤面が埋まるか、両者とも打てなくなったらゲーム終了
 
-## Development Notes
+## 開発メモ
 
-### Constants
+### 定数
 
-- `AREA_LENGTH = 8` - Board dimensions (8x8)
-- Canvas size: 48x48 pixels per cell
-- Piece radius: 16 pixels
+- `AREA_LENGTH = 8` - 盤面サイズ（8x8）
+- canvasサイズ: 1マス48x48ピクセル
+- 石の半径: 16ピクセル
 
-### Coordinate System
+### 座標系
 
-- Board uses `[x][y]` indexing where `x` is row and `y` is column
-- Canvas IDs follow pattern: `"canvas," + row + "," + col`
+- 盤面は`[x][y]`でインデックス（xが行、yが列）
+- canvasのIDは `"canvas," + 行 + "," + 列` の形式
 
-### Language
+## 実行方法
 
-- UI text and code comments are in Japanese
-- "やり直す" = "Restart"
-- "置く場所がない" = "No valid moves"
-
-## Running the Project
-
-Simply open `index.html` in a web browser. No build process or server required.
+`index.html`をブラウザで開くだけで動作します。ビルドやサーバーは不要です。
 
 ```bash
-# Using Python's built-in server (optional)
+# Pythonの簡易サーバーを使う場合（任意）
 python -m http.server 8000
-# Then open http://localhost:8000
+# http://localhost:8000 を開く
 
-# Or just open directly
+# または直接開く
 open index.html  # macOS
 xdg-open index.html  # Linux
 ```
 
-## Code Conventions
+## コーディング規約
 
-- **No build tools** - Vanilla JavaScript only
-- **No external dependencies** - Pure browser APIs
-- **Module pattern** - Using IIFEs and closures for encapsulation
-- **DOM manipulation** - Direct manipulation using `document.getElementById`
-- **Event handling** - Using `addEventListener`
+- **ビルドツールなし** - バニラJavaScriptのみ
+- **外部依存なし** - 純粋なブラウザAPIのみ使用
+- **モジュールパターン** - IIFEとクロージャによるカプセル化
+- **DOM操作** - `document.getElementById`による直接操作
+- **イベント処理** - `addEventListener`を使用
 
-## Potential Improvements
+## 改善の余地
 
-When making changes, consider:
+変更を加える際の考慮点：
 
-1. The CSS file is empty - all styling is done inline in JavaScript (line 309)
-2. No error handling for edge cases
-3. Game state is stored in closure variables, not easily serializable
-4. No mobile touch event support (uses click events only)
-5. No unit tests exist
+1. CSSファイルが空 - スタイルはJavaScript内でインライン定義（309行目）
+2. エッジケースのエラーハンドリングがない
+3. ゲーム状態がクロージャ変数に保存されており、シリアライズが困難
+4. モバイルのタッチイベント未対応（clickイベントのみ）
+5. ユニットテストが存在しない
 
-## Git Workflow
+## Gitワークフロー
 
-- Main development branch: Check current branch with `git branch`
-- Commits should be descriptive and focused
-- No CI/CD configuration exists
+- `git branch`で現在のブランチを確認
+- コミットは説明的で焦点を絞った内容にする
+- CI/CD設定は存在しない
 
-## Testing
+## テスト
 
-Manual testing only - open in browser and play through game scenarios:
-1. Normal gameplay flow
-2. Turn passing when no moves available
-3. Game end conditions
-4. Restart button functionality
+手動テストのみ。ブラウザで開いて以下のシナリオを確認：
+1. 通常のゲームプレイフロー
+2. 有効な手がない場合のパス処理
+3. ゲーム終了条件
+4. 「やり直す」ボタンの動作
